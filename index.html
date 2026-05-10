@@ -9,6 +9,11 @@
     <meta name="apple-mobile-web-app-title" content="MGHR Sales">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Enable background execution -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
     <title>MGHR Live Sales Dashboard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
     <script>
@@ -209,6 +214,86 @@
         
         let salesData = JSON.parse(localStorage.getItem('mghr_sales_data') || '[]');
         let deferredPrompt;
+        let wakeLock = null;
+
+        // Request wake lock to keep app alive in background
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock acquired');
+                    
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                    });
+                }
+            } catch (err) {
+                console.log('Wake Lock error:', err);
+            }
+        }
+
+        // Re-acquire wake lock when page becomes visible
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        // Request notification permission
+        async function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                console.log('Notification permission:', permission);
+                return permission === 'granted';
+            }
+            return Notification.permission === 'granted';
+        }
+
+        // Show notification
+        function showNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: 'icon-192.png',
+                    badge: 'icon-192.png',
+                    tag: 'mghr-sales',
+                    requireInteraction: false,
+                    silent: false
+                });
+
+                // Auto close after 5 seconds
+                setTimeout(() => notification.close(), 5000);
+
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+            }
+        }
+
+        // Enable audio and notifications on first user interaction
+        let audioEnabled = false;
+        async function enableAudioAndNotifications() {
+            if (!audioEnabled) {
+                const audio = document.getElementById('notification-sound');
+                try {
+                    await audio.play();
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audioEnabled = true;
+                    console.log('Audio enabled');
+                } catch (e) {
+                    console.log('Audio enable failed:', e);
+                }
+                
+                await requestNotificationPermission();
+                await requestWakeLock();
+            }
+        }
+
+        // Attach to user interactions
+        document.addEventListener('click', enableAudioAndNotifications, { once: true });
+        document.addEventListener('touchstart', enableAudioAndNotifications, { once: true });
 
         // PWA Install Prompt
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -454,12 +539,38 @@
                             salesData.push(payload);
                             saveData();
                             
+                            // Notify service worker for background notification
+                            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                                navigator.serviceWorker.controller.postMessage({
+                                    type: 'NEW_SALE',
+                                    billNo: payload.billNo,
+                                    total: payload.total,
+                                    label: payload.label
+                                });
+                            }
+                            
+                            // Play notification sound
                             const audio = document.getElementById('notification-sound');
                             audio.currentTime = 0;
-                            audio.play().catch(e => console.log('Audio autoplay blocked'));
+                            audio.volume = 1.0;
+                            
+                            const playPromise = audio.play();
+                            if (playPromise !== undefined) {
+                                playPromise
+                                    .then(() => console.log('Sound played'))
+                                    .catch(e => console.log('Sound blocked:', e));
+                            }
 
+                            // Show system notification
+                            showNotification(
+                                `New Sale: Bill #${payload.billNo}`,
+                                `Amount: ₹${payload.total} • ${payload.label || 'POS'}`
+                            );
+
+                            // Show toast
                             showToast(`New Sale: Bill #${payload.billNo} - ₹${payload.total}`, 'success');
 
+                            // Send ACK
                             client.publish('mghr/sales/ack', JSON.stringify({ billNo: payload.billNo }), { qos: 1 });
                         }
                     } catch (e) {
