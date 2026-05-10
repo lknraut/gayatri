@@ -1,13 +1,13 @@
 {
-  "name": "Sales MGHR",
+  "name": "MGHR Live Sales Dashboard",
   "short_name": "MGHR Sales",
-  "description": "Sales of Point of Sale system for Maa Gayatri Hotel and Restaurant",
+  "description": "Real-time sales dashboard for Maa Gayatri Hotel & Restaurant POS system",
   "start_url": "/gayatri/",
   "scope": "/gayatri/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#141414",
-  "theme_color": "#D4A84B",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
   "icons": [
     {
       "src": "icon-192.png",
@@ -21,5 +21,7 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "categories": ["business", "productivity", "finance"],
+  "screenshots": []
 }
