@@ -80,4 +80,51 @@ self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  
+  // Handle new sale notification from background
+  if (event.data && event.data.type === 'NEW_SALE') {
+    const { billNo, total, label } = event.data;
+    self.registration.showNotification('New Sale - MGHR', {
+      body: `Bill #${billNo} - ₹${total} (${label || 'POS'})`,
+      icon: '/gayatri/icon-192.png',
+      badge: '/gayatri/icon-192.png',
+      tag: 'mghr-sale-' + billNo,
+      requireInteraction: false,
+      vibrate: [200, 100, 200],
+      data: { billNo, total, label }
+    });
+  }
 });
+
+// Handle notification clicks
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(clientList => {
+        // Focus existing window if open
+        for (let client of clientList) {
+          if (client.url.includes('/gayatri/') && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Open new window if none exists
+        if (clients.openWindow) {
+          return clients.openWindow('/gayatri/');
+        }
+      })
+  );
+});
+
+// Periodic background sync (if supported)
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'check-sales') {
+    event.waitUntil(checkForNewSales());
+  }
+});
+
+async function checkForNewSales() {
+  // This would reconnect to MQTT in background
+  // For now, just log
+  console.log('[SW] Background sync check');
+}
