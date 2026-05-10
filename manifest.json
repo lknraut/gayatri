@@ -23,5 +23,10 @@
     }
   ],
   "categories": ["business", "productivity", "finance"],
-  "screenshots": []
+  "screenshots": [],
+  "permissions": [
+    "notifications",
+    "background-sync"
+  ],
+  "prefer_related_applications": false
 }
