@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,11 +10,11 @@
     <meta name="apple-mobile-web-app-title" content="MGHR Sales">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
-    
+   
     <!-- Enable background execution -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    
+   
     <title>MGHR Live Sales Dashboard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
     <script>
@@ -28,7 +29,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
-        
+       
         @keyframes shimmer {
             0% { background-position: -1000px 0; }
             100% { background-position: 1000px 0; }
@@ -69,7 +70,7 @@
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 font-sans antialiased">
     <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col relative">
-        
+       
         <!-- Install Prompt (shows when installable) -->
         <div id="install-prompt" class="install-prompt hidden">
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl shadow-2xl p-4 flex items-center gap-3 animate-slide-up">
@@ -173,7 +174,7 @@
                         Cleanup
                     </button>
                 </div>
-                
+               
                 <div id="sales-list" class="space-y-3">
                     <!-- Loading State -->
                     <div class="space-y-3">
@@ -188,12 +189,12 @@
         <!-- Footer -->
         <footer class="bg-gray-50 border-t border-gray-200 p-4 text-center">
             <p class="text-xs text-gray-500 font-medium">
-                Built with <span class="text-red-500">❤️</span> by 
+                Built with <span class="text-red-500">❤️</span> by
                 <span class="font-bold text-gray-700">साले साहब</span>
             </p>
         </footer>
     </div>
-    
+   
     <script>
         // Wait for DOM and Lucide to be ready
         document.addEventListener('DOMContentLoaded', function() {
@@ -204,14 +205,14 @@
 
         const MQTT_BROKER = 'wss://broker.hivemq.com:8884/mqtt';
         const MQTT_TOPIC = 'mghr/sales/v1';
-        
+       
         let localClientId = localStorage.getItem('mghr_sales_client_id');
         if (!localClientId) {
             localClientId = 'mghr_salesviewer_' + Math.random().toString(16).substr(2, 10);
             localStorage.setItem('mghr_sales_client_id', localClientId);
         }
         const clientId = localClientId;
-        
+       
         let salesData = JSON.parse(localStorage.getItem('mghr_sales_data') || '[]');
         let deferredPrompt;
         let wakeLock = null;
@@ -222,7 +223,7 @@
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
                     console.log('Wake Lock acquired');
-                    
+                   
                     wakeLock.addEventListener('release', () => {
                         console.log('Wake Lock released');
                     });
@@ -285,7 +286,7 @@
                 } catch (e) {
                     console.log('Audio enable failed:', e);
                 }
-                
+               
                 await requestNotificationPermission();
                 await requestWakeLock();
             }
@@ -332,12 +333,12 @@
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             sevenDaysAgo.setHours(0,0,0,0);
-            
+           
             salesData = salesData.filter(sale => {
                 const saleDate = new Date(sale.timestamp);
                 return saleDate >= sevenDaysAgo;
             });
-            
+           
             saveData();
 
             if (force) {
@@ -384,7 +385,7 @@
             salesData.forEach(sale => {
                 const dateObj = new Date(sale.timestamp);
                 const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                
+               
                 if (!grouped[dateStr]) {
                     const startOfDay = new Date(dateObj);
                     startOfDay.setHours(0,0,0,0);
@@ -412,7 +413,7 @@
             document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
             document.getElementById('total-bills').textContent = `${totalBills} Bills`;
             document.getElementById('avg-bill').textContent = totalBills > 0 ? `₹${(grandTotal/totalBills).toFixed(0)} Avg` : '₹0 Avg';
-            
+           
             document.getElementById('today-total').textContent = `₹${todayTotal.toFixed(0)}`;
             document.getElementById('today-count').textContent = `${todayCount} bills`;
             document.getElementById('yesterday-total').textContent = `₹${yesterdayTotal.toFixed(0)}`;
@@ -442,7 +443,7 @@
                 dayCard.className = 'bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden transition-all hover:shadow-lg';
                 dayCard.style.animationDelay = `${index * 50}ms`;
                 dayCard.classList.add('animate-slide-up');
-                
+               
                 dayCard.innerHTML = `
                     <div class="bg-gradient-to-r from-gray-50 to-white flex justify-between items-center p-4 cursor-pointer hover:from-blue-50 hover:to-blue-50/50 active:from-blue-100 active:to-blue-100/50 transition-all" onclick="toggleDay(this)">
                         <div class="flex items-center gap-3">
@@ -485,7 +486,7 @@
                 `;
                 listEl.appendChild(dayCard);
             });
-            
+           
             // Safely recreate icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
@@ -500,7 +501,7 @@
         function initMQTT() {
             const statusEl = document.getElementById('connection-status');
             const statusText = document.getElementById('connection-text');
-            
+           
             const client = mqtt.connect(MQTT_BROKER, {
                 clientId: clientId,
                 clean: false,
@@ -513,7 +514,7 @@
                 statusEl.className = 'w-2 h-2 rounded-full bg-green-400';
                 statusText.textContent = 'Live';
                 statusText.className = 'opacity-100';
-                
+               
                 client.subscribe(MQTT_TOPIC, { qos: 1 }, (err) => {
                     if (err) console.error('Subscribe err:', err);
                 });
@@ -533,12 +534,12 @@
                 if (topic === MQTT_TOPIC) {
                     try {
                         const payload = JSON.parse(message.toString());
-                        
+                       
                         const exists = salesData.some(s => s.billNo === payload.billNo && s.timestamp === payload.timestamp);
                         if (!exists) {
                             salesData.push(payload);
                             saveData();
-                            
+                           
                             // Notify service worker for background notification
                             if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                                 navigator.serviceWorker.controller.postMessage({
@@ -548,12 +549,12 @@
                                     label: payload.label
                                 });
                             }
-                            
+                           
                             // Play notification sound
                             const audio = document.getElementById('notification-sound');
                             audio.currentTime = 0;
                             audio.volume = 1.0;
-                            
+                           
                             const playPromise = audio.play();
                             if (playPromise !== undefined) {
                                 playPromise
@@ -569,10 +570,14 @@
 
                             // Show toast
                             showToast(`New Sale: Bill #${payload.billNo} - ₹${payload.total}`, 'success');
-
-                            // Send ACK
-                            client.publish('mghr/sales/ack', JSON.stringify({ billNo: payload.billNo }), { qos: 1 });
                         }
+
+                        // ALWAYS send ACK back to POS, even for duplicates
+                        // This tells the POS to stop retrying this specific bill
+                        client.publish('mghr/sales/ack', JSON.stringify({ 
+                            billNo: payload.billNo,
+                            receivedAt: Date.now()
+                        }), { qos: 1 });
                     } catch (e) {
                         console.error('Invalid payload', e);
                     }
@@ -580,7 +585,7 @@
             });
         }
 
-        // Initialize 
+        // Initialize
         cleanOldData();
         render();
         setTimeout(initMQTT, 500);
